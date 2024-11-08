@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Definición de colores -->
+    <color name="colorPrimary">#00AAFF</color>
+    <color name="colorSecondary">#00FFAA</color>
+    <color name="colorBackground">#F5F5F5</color>
+    <color name="colorAccent">#00FFAA</color>
+    <color name="colorText">#333333</color>
+
+    <!-- Tema principal de la aplicación -->
+    <style name="Theme.Tienda" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorSecondary">@color/colorSecondary</item>
+        <item name="android:windowBackground">@color/colorBackground</item>
+        <item name="android:textColor">@color/colorText</item>
+    </style>
+
+    <!-- Estilo para bordes redondeados -->
+    <style name="RoundedCorners">
+        <item name="android:background">@drawable/rounded_background</item>
+        <item name="android:clipToOutline">true</item>
+        <!-- Quitar clipToOutline si es necesario para compatibilidad con API baja -->
+    </style>
+</resources>
+
+

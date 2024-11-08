@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1204337019",
+    "project_id": "tienda-c9109",
+    "storage_bucket": "tienda-c9109.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1204337019:android:847c9ee3fa95447f8225de",
+        "android_client_info": {
+          "package_name": "com.example.tienda"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAU8Wm_A6hWikEo-5Yns4a6Y6xhEnAZW6k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
