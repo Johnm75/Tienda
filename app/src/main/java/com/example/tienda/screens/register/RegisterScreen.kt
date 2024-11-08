@@ -6,19 +6,21 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.Alignment
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun RegisterScreen(navController: NavController) {
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance() // Conexión a Firestore
 
     // Variables de estado para cada campo
     var nombre by remember { mutableStateOf("") }
@@ -101,8 +103,27 @@ fun RegisterScreen(navController: NavController) {
                 auth.createUserWithEmailAndPassword(correo, contraseña)
                     .addOnCompleteListener { task ->
                         if (task.isSuccessful) {
-                            Toast.makeText(context, "Registro exitoso", Toast.LENGTH_SHORT).show()
-                            navController.navigate("login")
+                            // Obtén el uid del usuario registrado
+                            val userId = auth.currentUser?.uid
+
+                            // Crea el documento en Firestore con los datos del usuario
+                            val user = hashMapOf(
+                                "nombre" to nombre,
+                                "edad" to edad,
+                                "telefono" to telefono,
+                                "correo" to correo
+                            )
+
+                            userId?.let {
+                                db.collection("users").document(it).set(user)
+                                    .addOnSuccessListener {
+                                        Toast.makeText(context, "Registro exitoso", Toast.LENGTH_SHORT).show()
+                                        navController.navigate("login") // Navegar a la pantalla de login
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Toast.makeText(context, "Error al guardar los datos: ${e.message}", Toast.LENGTH_SHORT).show()
+                                    }
+                            }
                         } else {
                             Toast.makeText(context, "Error en el registro: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
                         }
