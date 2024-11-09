@@ -1,7 +1,6 @@
-// LoginScreen.kt
 package com.example.tienda.screens.login
 
-import android.content.Intent
+import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -12,16 +11,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.tienda.R
+import com.example.tienda.RequestLocationPermission
+import com.example.tienda.saveLocationToFirebase
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
@@ -31,57 +31,39 @@ fun LoginScreen(navController: NavController) {
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
-    // Variables de estado para los campos de entrada
     var correo by remember { mutableStateOf("") }
     var contraseña by remember { mutableStateOf("") }
+    var showConsentScreen by remember { mutableStateOf(false) }
 
-    // Configuración de Google Sign-In
     val googleSignInClient: GoogleSignInClient = GoogleSignIn.getClient(
         context,
         GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(context.getString(R.string.default_web_client_id)) // Reemplaza con el ID de cliente de OAuth 2.0 de Firebase
+            .requestIdToken(context.getString(R.string.default_web_client_id))
             .requestEmail()
             .build()
     )
 
-    // Launcher para el resultado de Google Sign-In
+    RequestLocationPermission(
+        context = context,
+        fusedLocationClient = fusedLocationClient,
+        onLocationReceived = { location ->
+            saveLocationToFirebase(context, location)
+        }
+    )
+
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-        val account: GoogleSignInAccount? = task.result
-        if (account != null) {
-            val credential = GoogleAuthProvider.getCredential(account.idToken, null)
+        val account = GoogleSignIn.getSignedInAccountFromIntent(result.data).result
+        account?.let {
+            val credential = GoogleAuthProvider.getCredential(it.idToken, null)
             auth.signInWithCredential(credential)
                 .addOnCompleteListener { authTask ->
                     if (authTask.isSuccessful) {
-                        val userId = auth.currentUser?.uid
-                        val displayName = account.displayName ?: "Usuario" // Obtén el nombre de la cuenta de Google
-
-                        if (userId != null) {
-                            db.collection("users").document(userId).get()
-                                .addOnSuccessListener { document ->
-                                    if (document != null && document.exists()) {
-                                        // Si el usuario ya tiene datos en Firestore, muestra un saludo personalizado
-                                        val nombre = document.getString("nombre") ?: displayName
-                                        Toast.makeText(context, "Bienvenido $nombre", Toast.LENGTH_SHORT).show()
-                                    } else {
-                                        // Si no hay datos previos, usa el nombre de Google y guarda los datos en Firestore
-                                        val user = hashMapOf("nombre" to displayName)
-                                        db.collection("users").document(userId).set(user)
-                                            .addOnSuccessListener {
-                                                Toast.makeText(context, "Bienvenido $displayName", Toast.LENGTH_SHORT).show()
-                                            }
-                                            .addOnFailureListener { e ->
-                                                Toast.makeText(context, "Error al guardar los datos: ${e.message}", Toast.LENGTH_SHORT).show()
-                                            }
-                                    }
-                                    navController.navigate("products")
-                                }
-                                .addOnFailureListener { e ->
-                                    Toast.makeText(context, "Error al obtener los datos: ${e.message}", Toast.LENGTH_SHORT).show()
-                                }
+                        handleLoginSuccess(navController, db, context, it.displayName ?: "Usuario") {
+                            showConsentScreen = true
                         }
                     } else {
                         Toast.makeText(context, "Error de autenticación con Google: ${authTask.exception?.message}", Toast.LENGTH_SHORT).show()
@@ -101,7 +83,6 @@ fun LoginScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Campo de correo
         TextField(
             value = correo,
             onValueChange = { correo = it },
@@ -112,7 +93,6 @@ fun LoginScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Campo de contraseña
         TextField(
             value = contraseña,
             onValueChange = { contraseña = it },
@@ -123,27 +103,13 @@ fun LoginScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Botón de inicio de sesión
         Button(
             onClick = {
                 auth.signInWithEmailAndPassword(correo, contraseña)
                     .addOnCompleteListener { task ->
                         if (task.isSuccessful) {
-                            val userId = auth.currentUser?.uid
-                            if (userId != null) {
-                                db.collection("users").document(userId).get()
-                                    .addOnSuccessListener { document ->
-                                        if (document != null) {
-                                            val nombre = document.getString("nombre")
-                                            Toast.makeText(context, "Bienvenido $nombre", Toast.LENGTH_SHORT).show()
-                                            navController.navigate("products") // Navegar a la pantalla de productos
-                                        } else {
-                                            Toast.makeText(context, "No se encontraron datos del usuario", Toast.LENGTH_SHORT).show()
-                                        }
-                                    }
-                                    .addOnFailureListener { e ->
-                                        Toast.makeText(context, "Error al obtener los datos: ${e.message}", Toast.LENGTH_SHORT).show()
-                                    }
+                            handleLoginSuccess(navController, db, context, null) {
+                                showConsentScreen = true
                             }
                         } else {
                             Toast.makeText(context, "Error de autenticación: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
@@ -157,32 +123,70 @@ fun LoginScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Botón de inicio de sesión con Google
         Button(
-            onClick = {
-                val signInIntent = googleSignInClient.signInIntent
-                googleSignInLauncher.launch(signInIntent)
-            },
+            onClick = { googleSignInLauncher.launch(googleSignInClient.signInIntent) },
             modifier = Modifier.fillMaxWidth()
         ) {
-//            Icon(
-//                painter = painterResource(id = R.drawable.ic_google_logo),
-//                contentDescription = "Google Logo",
-//                modifier = Modifier.size(24.dp)
-//            )
-            Spacer(modifier = Modifier.width(8.dp))
             Text("Iniciar sesión con Google")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Enlace para ir a la pantalla de registro
         TextButton(
-            onClick = {
-                navController.navigate("register")
-            }
+            onClick = { navController.navigate("register") }
         ) {
             Text("¿No tienes cuenta? Regístrate aquí")
         }
+    }
+
+    if (showConsentScreen) {
+        ConsentScreen(
+            onConsentGiven = {
+                showConsentScreen = false
+                navController.navigate("products")
+            },
+            onCancel = { showConsentScreen = false }
+        )
+    }
+}
+
+@Composable
+fun ConsentScreen(onConsentGiven: () -> Unit, onCancel: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = { /* No hacer nada para evitar cerrar el diálogo sin consentir */ },
+        title = { Text("Consentimiento de Acceso") },
+        text = { Text("¿Aceptas compartir tus datos con la aplicación?") },
+        confirmButton = {
+            Button(onClick = onConsentGiven) { Text("Aceptar") }
+        },
+        dismissButton = {
+            Button(onClick = onCancel) { Text("Cancelar") }
+        }
+    )
+}
+
+private fun handleLoginSuccess(
+    navController: NavController,
+    db: FirebaseFirestore,
+    context: Context,
+    displayName: String?,
+    onConsentNeeded: () -> Unit
+) {
+    val userId = FirebaseAuth.getInstance().currentUser?.uid
+    userId?.let {
+        db.collection("users").document(userId).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val nombre = document.getString("nombre") ?: displayName
+                    Toast.makeText(context, "Bienvenido $nombre", Toast.LENGTH_SHORT).show()
+                    onConsentNeeded()
+                } else {
+                    db.collection("users").document(userId).set(mapOf("nombre" to displayName))
+                        .addOnSuccessListener {
+                            Toast.makeText(context, "Bienvenido $displayName", Toast.LENGTH_SHORT).show()
+                            onConsentNeeded()
+                        }
+                }
+            }
     }
 }

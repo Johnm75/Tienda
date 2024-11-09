@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.play.services.auth) // Para Google Sign-In
     implementation(libs.firebase.auth.ktx) // Para Firebase Auth con KTX
     implementation(libs.firebase.firestore.ktx.v2400)
+    implementation (libs.play.services.location)
     implementation(libs.accompanist.pager)
     implementation(libs.coil.compose)
     implementation(libs.accompanist.pager)
