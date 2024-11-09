@@ -66,6 +66,12 @@ dependencies {
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.play.services.auth) // Para Google Sign-In
     implementation(libs.firebase.auth.ktx) // Para Firebase Auth con KTX
+    implementation(libs.firebase.firestore.ktx.v2400)
+    implementation(libs.accompanist.pager)
+    implementation(libs.coil.compose)
+    implementation(libs.accompanist.pager)
+    implementation(libs.accompanist.pager.indicators)
+    implementation(libs.play.services.analytics.impl)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
