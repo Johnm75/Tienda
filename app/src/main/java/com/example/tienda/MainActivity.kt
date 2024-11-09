@@ -17,6 +17,7 @@ import com.example.tienda.models.Product
 import com.example.tienda.screens.cart.CartScreen
 import com.example.tienda.screens.products.ProductsScreen
 import com.example.tienda.screens.register.RegisterScreen
+import com.example.tienda.screens.profile.ProfileScreen
 import com.example.tienda.screens.login.LoginScreen
 import com.example.tienda.ui.theme.TiendaTheme
 import com.google.accompanist.pager.ExperimentalPagerApi
@@ -67,6 +68,8 @@ fun MainScreen() {
             composable("register") { RegisterScreen(navController) }
             composable("products") { ProductsScreen(navController, products) }
             composable("cart") { CartScreen() }
+            composable("profile") { ProfileScreen(navController) }
+
         }
     }
 }
@@ -92,7 +95,7 @@ suspend fun loadProductsFromFirebase(products: MutableList<Product>) {
 @Composable
 fun BottomNavigationBar(navController: NavController) {
     val items = listOf(
-        BottomNavItem("Configuración", "register", icon = R.drawable.ic_settings),
+        BottomNavItem("Configuración", "profile", icon = R.drawable.ic_settings),
         BottomNavItem("Productos", "products", icon = R.drawable.ic_products),
         BottomNavItem("Carrito", "cart", icon = R.drawable.ic_cart)
     )

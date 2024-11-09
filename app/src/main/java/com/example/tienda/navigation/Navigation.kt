@@ -11,19 +11,28 @@ import com.example.tienda.screens.register.RegisterScreen
 import com.example.tienda.screens.login.LoginScreen
 import com.example.tienda.models.Product
 import com.google.firebase.auth.FirebaseAuth
+import com.example.tienda.screens.profile.ProfileScreen
 
 val auth = FirebaseAuth.getInstance()
 val startDestination = if (auth.currentUser != null) "products" else "login"
 
 @Composable
 fun AppNavigation(navController: NavHostController, products: List<Product>) {
+
+    val auth = FirebaseAuth.getInstance()
+    val startDestination = if (auth.currentUser != null) "products" else "login"
+
     NavHost(
         navController = navController,
-        startDestination = "login"  // Asegúrate de que la pantalla inicial sea la de login
+        startDestination = startDestination // Usar la variable startDestination aquí
     ) {
         composable("login") { LoginScreen(navController) }
         composable("register") { RegisterScreen(navController) }
         composable("products") { ProductsScreen(navController, products) }
         composable("cart") { CartScreen() }
+        composable("profile") { ProfileScreen(navController) }
+
     }
 }
+
+
