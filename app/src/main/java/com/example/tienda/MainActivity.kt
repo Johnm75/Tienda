@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -40,12 +41,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             TiendaTheme {
-                MainScreen()
+                val cartItems = remember { mutableStateListOf<Product>() }
+                MainScreen(cartItems = cartItems)
             }
         }
     }
 }
-
 
 fun saveLocationToFirebase(context: Context, location: Location) {
     val auth = FirebaseAuth.getInstance()
@@ -57,7 +58,8 @@ fun saveLocationToFirebase(context: Context, location: Location) {
             "latitude" to location.latitude,
             "longitude" to location.longitude
         )
-        db.collection("users").document(userId).update("location", userLocation)
+        db.collection("users").document(userId).update(userLocation as Map<String, Any>)
+
             .addOnSuccessListener {
                 Toast.makeText(context, "Ubicación guardada en Firebase", Toast.LENGTH_SHORT).show()
             }
@@ -66,7 +68,6 @@ fun saveLocationToFirebase(context: Context, location: Location) {
             }
     }
 }
-
 
 @Composable
 fun RequestLocationPermission(
@@ -98,7 +99,6 @@ fun RequestLocationPermission(
     }
 }
 
-
 private fun getLocation(
     context: Context,
     fusedLocationClient: FusedLocationProviderClient,
@@ -120,14 +120,25 @@ private fun getLocation(
 }
 
 @Composable
-fun MainScreen() {
+fun MainScreen(cartItems: MutableList<Product>) {
     val navController = rememberNavController()
     val products = remember { mutableStateListOf<Product>() }
     var showBottomBar by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
     LaunchedEffect(Unit) {
         loadProductsFromFirebase(products)
     }
+
+    // Request location permission and save location to Firebase
+    RequestLocationPermission(
+        context = context,
+        fusedLocationClient = fusedLocationClient,
+        onLocationReceived = { location ->
+            saveLocationToFirebase(context, location)
+        }
+    )
 
     navController.addOnDestinationChangedListener { _, destination, _ ->
         showBottomBar = destination.route !in listOf("login", "register")
@@ -147,8 +158,8 @@ fun MainScreen() {
         ) {
             composable("login") { LoginScreen(navController) }
             composable("register") { RegisterScreen(navController) }
-            composable("products") { ProductsScreen(navController, products) }
-            composable("cart") { CartScreen() }
+            composable("products") { ProductsScreen(navController, products, cartItems) }
+            composable("cart") { CartScreen(cartItems) }
             composable("profile") { ProfileScreen(navController) }
         }
     }

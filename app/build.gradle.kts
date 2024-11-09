@@ -1,8 +1,11 @@
+
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.google.gms.google.services)
-}
+        alias(libs.plugins.android.application)
+        alias(libs.plugins.kotlin.android)
+        alias(libs.plugins.google.gms.google.services)
+
+    }
+
 
 android {
     namespace = "com.example.tienda"
@@ -68,6 +71,7 @@ dependencies {
     implementation(libs.firebase.auth.ktx) // Para Firebase Auth con KTX
     implementation(libs.firebase.firestore.ktx.v2400)
     implementation (libs.play.services.location)
+
     implementation(libs.accompanist.pager)
     implementation(libs.coil.compose)
     implementation(libs.accompanist.pager)

@@ -1,5 +1,6 @@
 package com.example.tienda.screens.products
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -19,9 +20,8 @@ import coil.request.ImageRequest
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun ProductsScreen(navController: NavController, products: List<Product>) {
+fun ProductsScreen(navController: NavController, products: List<Product>, cartItems: MutableList<Product>) {
     val pagerState = rememberPagerState()
-
 
     Column(
         modifier = Modifier
@@ -35,7 +35,7 @@ fun ProductsScreen(navController: NavController, products: List<Product>) {
             state = pagerState,
             modifier = Modifier.fillMaxSize()
         ) { page ->
-            ProductCard(product = products[page], navController = navController)
+            ProductCard(product = products[page], navController = navController, cartItems = cartItems)
         }
 
         HorizontalPagerIndicator(
@@ -48,14 +48,14 @@ fun ProductsScreen(navController: NavController, products: List<Product>) {
 }
 
 @Composable
-fun ProductCard(product: Product, navController: NavController) {
+fun ProductCard(product: Product, navController: NavController, cartItems: MutableList<Product>) {
     val context = LocalContext.current
     Card(
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
-            .height(750.dp) // Ajusta la altura para hacer la tarjeta más grande
+            .height(750.dp)
     ) {
         Column(
             modifier = Modifier
@@ -67,8 +67,8 @@ fun ProductCard(product: Product, navController: NavController) {
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(product.imageUrl)
-                    .diskCachePolicy(CachePolicy.DISABLED) // Desactiva el caché de disco
-                    .memoryCachePolicy(CachePolicy.DISABLED) // Desactiva el caché en memoria
+                    .diskCachePolicy(CachePolicy.DISABLED)
+                    .memoryCachePolicy(CachePolicy.DISABLED)
                     .build(),
                 contentDescription = product.name,
                 contentScale = ContentScale.Crop,
@@ -76,7 +76,6 @@ fun ProductCard(product: Product, navController: NavController) {
                     .size(400.dp)
                     .padding(8.dp)
             )
-
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -92,10 +91,12 @@ fun ProductCard(product: Product, navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(onClick = { /* Agregar al carrito */ }) {
+            Button(onClick = {
+                cartItems.add(product)
+                Toast.makeText(context, "${product.name} añadido al carrito", Toast.LENGTH_SHORT).show()
+            }) {
                 Text("Añadir al carrito")
             }
         }
     }
 }
-
