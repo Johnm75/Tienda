@@ -103,7 +103,10 @@ fun ProfileScreen(navController: NavController) {
             Button(
                 onClick = {
                     saveProfileChanges(nombre, edad, telefono, correo, userId = auth.currentUser?.uid, db, context)
-                },
+
+                    navController.navigate("products") {
+                        popUpTo("profile") { inclusive = true }
+                    }},
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Guardar Cambios")
