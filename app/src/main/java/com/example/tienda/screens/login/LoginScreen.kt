@@ -57,16 +57,27 @@ fun LoginScreen(navController: NavController) {
                 .addOnCompleteListener { authTask ->
                     if (authTask.isSuccessful) {
                         val userId = auth.currentUser?.uid
+                        val displayName = account.displayName ?: "Usuario" // Obtén el nombre de la cuenta de Google
+
                         if (userId != null) {
                             db.collection("users").document(userId).get()
                                 .addOnSuccessListener { document ->
-                                    if (document != null) {
-                                        val nombre = document.getString("nombre")
+                                    if (document != null && document.exists()) {
+                                        // Si el usuario ya tiene datos en Firestore, muestra un saludo personalizado
+                                        val nombre = document.getString("nombre") ?: displayName
                                         Toast.makeText(context, "Bienvenido $nombre", Toast.LENGTH_SHORT).show()
-                                        navController.navigate("products")
                                     } else {
-                                        Toast.makeText(context, "No se encontraron datos del usuario", Toast.LENGTH_SHORT).show()
+                                        // Si no hay datos previos, usa el nombre de Google y guarda los datos en Firestore
+                                        val user = hashMapOf("nombre" to displayName)
+                                        db.collection("users").document(userId).set(user)
+                                            .addOnSuccessListener {
+                                                Toast.makeText(context, "Bienvenido $displayName", Toast.LENGTH_SHORT).show()
+                                            }
+                                            .addOnFailureListener { e ->
+                                                Toast.makeText(context, "Error al guardar los datos: ${e.message}", Toast.LENGTH_SHORT).show()
+                                            }
                                     }
+                                    navController.navigate("products")
                                 }
                                 .addOnFailureListener { e ->
                                     Toast.makeText(context, "Error al obtener los datos: ${e.message}", Toast.LENGTH_SHORT).show()
