@@ -59,7 +59,6 @@ fun saveLocationToFirebase(context: Context, location: Location) {
             "longitude" to location.longitude
         )
         db.collection("users").document(userId).update(userLocation as Map<String, Any>)
-
             .addOnSuccessListener {
                 Toast.makeText(context, "Ubicación guardada en Firebase", Toast.LENGTH_SHORT).show()
             }
@@ -149,7 +148,8 @@ fun MainScreen(cartItems: MutableList<Product>) {
             if (showBottomBar) {
                 BottomNavigationBar(navController = navController)
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         NavHost(
             navController = navController,
@@ -187,11 +187,11 @@ fun BottomNavigationBar(navController: NavController) {
         BottomNavItem("Carrito", "cart", icon = R.drawable.ic_cart)
     )
 
-    NavigationBar {
+    NavigationBar(containerColor = MaterialTheme.colorScheme.primary) {
         items.forEach { item ->
             NavigationBarItem(
-                icon = { Icon(painterResource(id = item.icon), contentDescription = item.label) },
-                label = { Text(item.label) },
+                icon = { Icon(painterResource(id = item.icon), contentDescription = item.label, tint = MaterialTheme.colorScheme.onPrimary) },
+                label = { Text(item.label, color = MaterialTheme.colorScheme.onPrimary) },
                 selected = navController.currentDestination?.route == item.route,
                 onClick = {
                     navController.navigate(item.route) {

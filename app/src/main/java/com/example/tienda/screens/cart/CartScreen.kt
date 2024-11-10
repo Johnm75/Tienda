@@ -6,7 +6,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.tienda.models.Product
 import coil.compose.rememberImagePainter
@@ -24,12 +26,13 @@ fun CartScreen(initialCartItems: List<Product>) {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = "Carrito de Compras",
             style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+            color = MaterialTheme.colorScheme.onBackground // Color de texto según el esquema
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -45,6 +48,7 @@ fun CartScreen(initialCartItems: List<Product>) {
         Text(
             text = "Total: $$total",
             style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onBackground, // Color de texto para el total
             modifier = Modifier.align(Alignment.End)
         )
 
@@ -52,7 +56,11 @@ fun CartScreen(initialCartItems: List<Product>) {
 
         Button(
             onClick = { /* Lógica para realizar el pago */ },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary, // Color del botón
+                contentColor = MaterialTheme.colorScheme.onPrimary // Color del texto del botón
+            )
         ) {
             Text("Pagar")
         }
@@ -81,19 +89,26 @@ fun CartItemRow(product: Product, onRemoveItem: () -> Unit) {
         Text(
             text = product.name,
             style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground, // Color del texto del producto
             modifier = Modifier.weight(1f)
         )
 
         // Precio del producto a la derecha
         Text(
             text = "$${product.price}",
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onBackground // Color del texto del precio
         )
 
         // Botón para eliminar el producto
-        IconButton(onClick = onRemoveItem) {
+        IconButton(
+            onClick = onRemoveItem,
+            colors = IconButtonDefaults.iconButtonColors(
+                contentColor = MaterialTheme.colorScheme.error // Color del ícono de eliminación
+            )
+        ) {
             Icon(
-                painter = rememberImagePainter(data = R.drawable.ic_delete), // Reemplaza con un ícono de eliminación
+                painter = painterResource(id = R.drawable.ic_delete), // Reemplaza con un ícono de eliminación
                 contentDescription = "Eliminar",
                 modifier = Modifier.size(24.dp)
             )

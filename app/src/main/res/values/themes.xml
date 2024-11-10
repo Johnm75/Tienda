@@ -1,26 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Definición de colores -->
-    <color name="colorPrimary">#00AAFF</color>
-    <color name="colorSecondary">#00FFAA</color>
-    <color name="colorBackground">#F5F5F5</color>
-    <color name="colorAccent">#00FFAA</color>
-    <color name="colorText">#333333</color>
 
-    <!-- Tema principal de la aplicación -->
-    <style name="Theme.Tienda" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.Tienda" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- Primary colors -->
         <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorSecondary">@color/colorSecondary</item>
-        <item name="android:windowBackground">@color/colorBackground</item>
-        <item name="android:textColor">@color/colorText</item>
+        <item name="colorPrimaryContainer">@color/colorPrimaryVariant</item>
+        <item name="colorSecondary">@color/accent_pink</item>
+        <item name="colorSecondaryContainer">@color/colorPrimaryVariant</item>
+
+        <!-- Background and Surface colors -->
+        <item name="background">@color/dark_background</item>
+        <item name="colorSurface">@color/dark_gray</item>
+        <item name="colorOnBackground">@color/light_gray</item>
+        <item name="colorOnSurface">@color/light_gray</item>
+
+        <!-- Text colors -->
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColorSecondary">@color/light_gray</item>
+
+        <!-- Button colors -->
+        <item name="colorButtonNormal">@color/colorPrimary</item>
+        <item name="android:colorAccent">@color/accent_pink</item>
+
+        <!-- Status Bar and Navigation Bar -->
+        <item name="android:statusBarColor">@color/dark_background</item>
+        <item name="android:navigationBarColor">@color/dark_background</item>
     </style>
 
-    <!-- Estilo para bordes redondeados -->
-    <style name="RoundedCorners">
-        <item name="android:background">@drawable/rounded_background</item>
-        <item name="android:clipToOutline">true</item>
-        <!-- Quitar clipToOutline si es necesario para compatibilidad con API baja -->
-    </style>
 </resources>
-
-

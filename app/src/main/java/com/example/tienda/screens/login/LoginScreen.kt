@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -26,7 +27,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(navController: NavController) {
     val context = LocalContext.current
@@ -80,26 +81,47 @@ fun LoginScreen(navController: NavController) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "Iniciar Sesión", style = MaterialTheme.typography.headlineLarge)
+        Text(
+            text = "Iniciar Sesión",
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.onBackground
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
 
         TextField(
             value = correo,
             onValueChange = { correo = it },
-            label = { Text("Correo Electrónico") },
+            label = { Text("Correo Electrónico", color = MaterialTheme.colorScheme.onSurface) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface,
+                cursorColor = MaterialTheme.colorScheme.primary
+            )
         )
+
 
         Spacer(modifier = Modifier.height(16.dp))
 
         TextField(
             value = contraseña,
             onValueChange = { contraseña = it },
-            label = { Text("Contraseña") },
+            label = { Text("Contraseña", color = MaterialTheme.colorScheme.onSurface) },
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface,
+                cursorColor = MaterialTheme.colorScheme.primary
+            )
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -117,7 +139,11 @@ fun LoginScreen(navController: NavController) {
                         }
                     }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
         ) {
             Text("Iniciar Sesión")
         }
@@ -126,7 +152,11 @@ fun LoginScreen(navController: NavController) {
 
         Button(
             onClick = { googleSignInLauncher.launch(googleSignInClient.signInIntent) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
         ) {
             Text("Iniciar sesión con Google")
         }
@@ -136,7 +166,7 @@ fun LoginScreen(navController: NavController) {
         TextButton(
             onClick = { navController.navigate("register") }
         ) {
-            Text("¿No tienes cuenta? Regístrate aquí")
+            Text("¿No tienes cuenta? Regístrate aquí", color = MaterialTheme.colorScheme.primary)
         }
     }
 
@@ -155,13 +185,29 @@ fun LoginScreen(navController: NavController) {
 fun ConsentScreen(onConsentGiven: () -> Unit, onCancel: () -> Unit) {
     AlertDialog(
         onDismissRequest = { /* No hacer nada para evitar cerrar el diálogo sin consentir */ },
-        title = { Text("Consentimiento de Acceso") },
-        text = { Text("¿Aceptas compartir tus datos con la aplicación?") },
+        title = { Text("Consentimiento de Acceso", color = MaterialTheme.colorScheme.onBackground) },
+        text = { Text("¿Aceptas compartir tus datos con la aplicación?", color = MaterialTheme.colorScheme.onBackground) },
         confirmButton = {
-            Button(onClick = onConsentGiven) { Text("Aceptar") }
+            Button(
+                onClick = onConsentGiven,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Text("Aceptar")
+            }
         },
         dismissButton = {
-            Button(onClick = onCancel) { Text("Cancelar") }
+            Button(
+                onClick = onCancel,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Text("Cancelar")
+            }
         }
     )
 }
