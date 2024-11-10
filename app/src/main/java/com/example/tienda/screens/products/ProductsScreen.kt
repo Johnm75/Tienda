@@ -1,6 +1,7 @@
 package com.example.tienda.screens.products
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -10,13 +11,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import com.example.tienda.models.Product
 import com.google.accompanist.pager.*
 import androidx.navigation.NavController
-import coil.request.CachePolicy
-import coil.request.ImageRequest
+import com.example.tienda.R
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
@@ -50,6 +50,16 @@ fun ProductsScreen(navController: NavController, products: List<Product>, cartIt
 @Composable
 fun ProductCard(product: Product, navController: NavController, cartItems: MutableList<Product>) {
     val context = LocalContext.current
+
+    // Obtener el recurso de imagen en base al campo `imageUrl` del producto
+    val imageResourceId = when (product.imageUrl) {
+        "producto1" -> R.drawable.producto1
+        "producto2" -> R.drawable.producto2
+        "producto3" -> R.drawable.producto3
+        "producto4" -> R.drawable.producto4
+        else -> R.drawable.ic_default_profile // Imagen por defecto si no se encuentra
+    }
+
     Card(
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier
@@ -64,12 +74,9 @@ fun ProductCard(product: Product, navController: NavController, cartItems: Mutab
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(product.imageUrl)
-                    .diskCachePolicy(CachePolicy.DISABLED)
-                    .memoryCachePolicy(CachePolicy.DISABLED)
-                    .build(),
+            // Cargar imagen desde recursos locales
+            Image(
+                painter = painterResource(id = imageResourceId),
                 contentDescription = product.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier

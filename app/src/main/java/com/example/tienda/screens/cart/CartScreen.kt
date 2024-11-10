@@ -69,6 +69,15 @@ fun CartScreen(initialCartItems: List<Product>) {
 
 @Composable
 fun CartItemRow(product: Product, onRemoveItem: () -> Unit) {
+
+    val imageResourceId = when (product.imageUrl) {
+        "producto1" -> R.drawable.producto1
+        "producto2" -> R.drawable.producto2
+        "producto3" -> R.drawable.producto3
+        "producto4" -> R.drawable.producto4
+        else -> R.drawable.ic_default_profile // Imagen por defecto si no se encuentra
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -77,7 +86,7 @@ fun CartItemRow(product: Product, onRemoveItem: () -> Unit) {
     ) {
         // Imagen del producto a la izquierda
         Image(
-            painter = rememberImagePainter(data = product.imageUrl),
+            painter = painterResource(id = imageResourceId),
             contentDescription = product.name,
             contentScale = ContentScale.Crop,
             modifier = Modifier

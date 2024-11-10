@@ -28,6 +28,7 @@ import androidx.navigation.NavController
 import com.example.tienda.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.tasks.await
 import java.io.File
 import java.io.FileOutputStream
@@ -38,6 +39,11 @@ fun ProfileScreen(navController: NavController) {
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
 
+
+    var showDeleteConfirmationDialog by remember { mutableStateOf(false) }
+    var deleteCountdown by remember { mutableStateOf(5) }
+    var isDeleteButtonEnabled by remember { mutableStateOf(false) }
+
     val isGoogleAccount = remember {
         auth.currentUser?.providerData?.any { it.providerId == "google.com" } == true
     }
@@ -46,7 +52,7 @@ fun ProfileScreen(navController: NavController) {
 
     if (isGoogleAccount && !hasRedirected) {
         LaunchedEffect(Unit) {
-            Toast.makeText(context, "Esta cuenta está vinculada a Google y no se puede editar.", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Esta cuenta está vinculada a Google. Para realizar ajustes, use la configuración de su cuenta de Google.", Toast.LENGTH_LONG).show()
             navController.navigate("products") {
                 popUpTo("profile") { inclusive = true }
             }
@@ -62,6 +68,20 @@ fun ProfileScreen(navController: NavController) {
     var profileImageBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var imagePath by remember { mutableStateOf<String?>(null) }
 
+     fun saveImageToInternalStorage(context: Context, bitmap: Bitmap): String? {
+        val filename = "profile_image.png"
+        return try {
+            val file = File(context.filesDir, filename)
+            FileOutputStream(file).use { out ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
+            file.absolutePath
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -73,6 +93,37 @@ fun ProfileScreen(navController: NavController) {
             }
         }
     }
+
+  fun saveProfileChanges(
+        context: Context,
+        nombre: String,
+        edad: String,
+        telefono: String,
+        correo: String,
+        imagePath: String?,
+        db: FirebaseFirestore
+    ) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        userId?.let {
+            val userUpdates = hashMapOf(
+                "nombre" to nombre,
+                "edad" to edad,
+                "telefono" to telefono,
+                "correo" to correo,
+                "profileImagePath" to imagePath
+            )
+            db.collection("users").document(userId).update(userUpdates as Map<String, Any>)
+                .addOnSuccessListener {
+                    Toast.makeText(context, "Perfil actualizado correctamente", Toast.LENGTH_SHORT).show()
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(context, "Error al actualizar perfil: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        }
+    }
+
+
+
 
     LaunchedEffect(Unit) {
         val userId = auth.currentUser?.uid
@@ -181,50 +232,90 @@ fun ProfileScreen(navController: NavController) {
         ) {
             Text("Guardar Cambios")
         }
+
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = {
+                showDeleteConfirmationDialog = true
+                deleteCountdown = 5
+                isDeleteButtonEnabled = false
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+        ) {
+            Text("Eliminar Cuenta")
+        }
+
+        if (showDeleteConfirmationDialog) {
+            DeleteConfirmationDialog(
+                onConfirm = {
+                    deleteUserAccount(navController, context)
+                    showDeleteConfirmationDialog = false
+                },
+                onCancel = {
+                    showDeleteConfirmationDialog = false
+                },
+                countdown = deleteCountdown,
+                isButtonEnabled = isDeleteButtonEnabled
+            )
+            LaunchedEffect(deleteCountdown) {
+                while (deleteCountdown > 0) {
+                    delay(1000)
+                    deleteCountdown--
+                }
+                isDeleteButtonEnabled = true
+            }
+        }
     }
 }
 
-private fun saveProfileChanges(
-    context: Context,
-    nombre: String,
-    edad: String,
-    telefono: String,
-    correo: String,
-    imagePath: String?,
-    db: FirebaseFirestore
+@Composable
+fun DeleteConfirmationDialog(
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+    countdown: Int,
+    isButtonEnabled: Boolean
 ) {
+    AlertDialog(
+        onDismissRequest = { },
+        title = { Text("Confirmar Eliminación") },
+        text = { Text("¿Estás seguro de que deseas eliminar tu cuenta? Este proceso es irreversible. Espera $countdown segundos para habilitar el botón de confirmación.") },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = isButtonEnabled,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+                Text("Confirmar")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onCancel) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+private fun deleteUserAccount(navController: NavController, context: Context) {
     val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
     val userId = auth.currentUser?.uid
 
     userId?.let {
-        val userUpdates = hashMapOf<String, Any>(
-            "nombre" to nombre,
-            "edad" to edad,
-            "telefono" to telefono,
-            "correo" to correo,
-            "profileImagePath" to (imagePath ?: "")
-        )
-        db.collection("users").document(userId).update(userUpdates)
-            .addOnSuccessListener {
-                Toast.makeText(context, "Datos actualizados correctamente", Toast.LENGTH_SHORT).show()
+        db.collection("users").document(userId).delete().addOnSuccessListener {
+            auth.currentUser?.delete()?.addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Toast.makeText(context, "Cuenta eliminada", Toast.LENGTH_SHORT).show()
+                    navController.navigate("login") {
+                        popUpTo("products") { inclusive = true }
+                    }
+                } else {
+                    Toast.makeText(context, "Error al eliminar cuenta: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                }
             }
-            .addOnFailureListener { e ->
-                Toast.makeText(context, "Error al actualizar: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-    }
-}
-
-private fun saveImageToInternalStorage(context: Context, bitmap: Bitmap): String? {
-    val fileName = "profile_image.png"
-    val file = File(context.filesDir, fileName)
-    return try {
-        val outputStream = FileOutputStream(file)
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-        outputStream.flush()
-        outputStream.close()
-        file.absolutePath
-    } catch (e: Exception) {
-        e.printStackTrace()
-        null
+        }
     }
 }

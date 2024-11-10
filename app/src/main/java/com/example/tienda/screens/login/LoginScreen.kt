@@ -1,6 +1,8 @@
 package com.example.tienda.screens.login
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,13 +17,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.navigation.NavController
 import com.example.tienda.R
-import com.example.tienda.RequestLocationPermission
 import com.example.tienda.saveLocationToFirebase
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
@@ -47,14 +50,6 @@ fun LoginScreen(navController: NavController) {
             .build()
     )
 
-    RequestLocationPermission(
-        context = context,
-        fusedLocationClient = fusedLocationClient,
-        onLocationReceived = { location ->
-            saveLocationToFirebase(context, location)
-        }
-    )
-
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -64,7 +59,7 @@ fun LoginScreen(navController: NavController) {
             auth.signInWithCredential(credential)
                 .addOnCompleteListener { authTask ->
                     if (authTask.isSuccessful) {
-                        handleLoginSuccess(navController, db, context, it.displayName ?: "Usuario") {
+                        handleLoginSuccess(navController, db, context, it.displayName ?: "Usuario", fusedLocationClient) {
                             showConsentScreen = true
                         }
                     } else {
@@ -105,7 +100,6 @@ fun LoginScreen(navController: NavController) {
             )
         )
 
-
         Spacer(modifier = Modifier.height(16.dp))
 
         TextField(
@@ -131,7 +125,7 @@ fun LoginScreen(navController: NavController) {
                 auth.signInWithEmailAndPassword(correo, contraseña)
                     .addOnCompleteListener { task ->
                         if (task.isSuccessful) {
-                            handleLoginSuccess(navController, db, context, null) {
+                            handleLoginSuccess(navController, db, context, null, fusedLocationClient) {
                                 showConsentScreen = true
                             }
                         } else {
@@ -217,6 +211,7 @@ private fun handleLoginSuccess(
     db: FirebaseFirestore,
     context: Context,
     displayName: String?,
+    fusedLocationClient: FusedLocationProviderClient,
     onConsentNeeded: () -> Unit
 ) {
     val userId = FirebaseAuth.getInstance().currentUser?.uid
@@ -226,11 +221,44 @@ private fun handleLoginSuccess(
                 if (document.exists()) {
                     val nombre = document.getString("nombre") ?: displayName
                     Toast.makeText(context, "Bienvenido $nombre", Toast.LENGTH_SHORT).show()
+                    // Solicitar ubicación después de iniciar sesión
+                    if (ActivityCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        // TODO: Consider calling
+                        //    ActivityCompat#requestPermissions
+                        // here to request the missing permissions, and then overriding
+                        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                        //                                          int[] grantResults)
+                        // to handle the case where the user grants the permission. See the documentation
+                        // for ActivityCompat#requestPermissions for more details.
+                        return@addOnSuccessListener
+                    }
+                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                        if (location != null) {
+                            saveLocationToFirebase(context, location)
+                        } else {
+                            Toast.makeText(context, "No se pudo obtener la ubicación", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                     onConsentNeeded()
                 } else {
                     db.collection("users").document(userId).set(mapOf("nombre" to displayName))
                         .addOnSuccessListener {
                             Toast.makeText(context, "Bienvenido $displayName", Toast.LENGTH_SHORT).show()
+                            // Solicitar ubicación después de registrar al usuario
+                            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                if (location != null) {
+                                    saveLocationToFirebase(context, location)
+                                } else {
+                                    Toast.makeText(context, "No se pudo obtener la ubicación", Toast.LENGTH_SHORT).show()
+                                }
+                            }
                             onConsentNeeded()
                         }
                 }

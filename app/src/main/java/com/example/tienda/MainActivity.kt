@@ -131,13 +131,7 @@ fun MainScreen(cartItems: MutableList<Product>) {
     }
 
     // Request location permission and save location to Firebase
-    RequestLocationPermission(
-        context = context,
-        fusedLocationClient = fusedLocationClient,
-        onLocationReceived = { location ->
-            saveLocationToFirebase(context, location)
-        }
-    )
+
 
     navController.addOnDestinationChangedListener { _, destination, _ ->
         showBottomBar = destination.route !in listOf("login", "register")
@@ -190,7 +184,7 @@ fun BottomNavigationBar(navController: NavController) {
     NavigationBar(containerColor = MaterialTheme.colorScheme.primary) {
         items.forEach { item ->
             NavigationBarItem(
-                icon = { Icon(painterResource(id = item.icon), contentDescription = item.label, tint = MaterialTheme.colorScheme.onPrimary) },
+                icon = { Icon(painterResource(id = item.icon), contentDescription = item.label) },
                 label = { Text(item.label, color = MaterialTheme.colorScheme.onPrimary) },
                 selected = navController.currentDestination?.route == item.route,
                 onClick = {
